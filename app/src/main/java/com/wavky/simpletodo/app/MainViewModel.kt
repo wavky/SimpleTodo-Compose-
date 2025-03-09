@@ -15,23 +15,23 @@ class MainViewModel(
   private val addTodoUseCase: AddTodoUseCase,
   private val updateTodoUseCase: UpdateTodoUseCase,
   private val deleteTodoUseCase: DeleteTodoUseCase
-) : BaseViewModel() {
+) : BaseViewModel(), MainViewModelFunc {
 
   val todoList: StateFlow<List<Todo>> = getTodoListUseCase.execute().stateIn(emptyList())
 
-  fun addTodo(title: String, description: String) {
+  override fun addTodo(title: String, description: String) {
     viewModelScope.launch {
       addTodoUseCase.execute(title, description)
     }
   }
 
-  fun updateTodo(todo: Todo) {
+  override fun updateTodo(todo: Todo) {
     viewModelScope.launch {
       updateTodoUseCase.execute(todo)
     }
   }
 
-  fun deleteTodo(todo: Todo) {
+  override fun deleteTodo(todo: Todo) {
     viewModelScope.launch {
       deleteTodoUseCase.execute(todo)
     }

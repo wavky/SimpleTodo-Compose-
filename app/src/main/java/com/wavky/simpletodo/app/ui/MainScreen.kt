@@ -1,5 +1,6 @@
 package com.wavky.simpletodo.app.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,14 +35,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import com.wavky.simpletodo.R
 import com.wavky.simpletodo.app.MainViewModel
+import com.wavky.simpletodo.app.MainViewModelFunc
 import com.wavky.simpletodo.app.ui.theme.Colors
 import com.wavky.simpletodo.domain.model.Todo
 import org.koin.androidx.compose.koinViewModel
+import kotlin.random.Random
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = koinViewModel()) {
+  val todoList by viewModel.todoList.collectAsState()
+
+  MainScreenContent(modifier, todoList, viewModel)
+}
+
+@Composable
+fun MainScreenContent(
+  modifier: Modifier = Modifier,
+  todoList: List<Todo>,
+  viewModel: MainViewModelFunc
+) {
+  var duration by remember { mutableStateOf(Duration.TODAY) }
   var showCreateTodoDialog by remember { mutableStateOf(false) }
   var showModifyTodoDialog by remember { mutableStateOf<Todo?>(null) }
   var isTodoActivated by remember { mutableStateOf(true) }
@@ -53,83 +70,101 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = koinVie
       Icon(Icons.Default.Add, contentDescription = null)
     }
   }) { innerPadding ->
-    Column(
+    ConstraintLayout(
       modifier = modifier
         .fillMaxSize()
         .padding(innerPadding)
     ) {
-      TitleRow()
-      ButtonRow(
-        isTodoActivated,
-        isDoneActivated,
-        { isTodoActivated = !isTodoActivated },
-        { isDoneActivated = !isDoneActivated })
-      val todoList by viewModel.todoList.collectAsState()
-      val filteredTodoList = remember(todoList, isTodoActivated, isDoneActivated) {
-        todoList.filter { todo ->
-          when {
-            isTodoActivated && isDoneActivated -> true
-            isTodoActivated -> !todo.isDone
-            isDoneActivated -> todo.isDone
-            else -> false
+      val (title, durationButton, content) = createRefs()
+      Text(
+        stringResource(id = R.string.title),
+        Modifier.constrainAs(title) {
+          top.linkTo(parent.top)
+          start.linkTo(parent.start)
+        },
+        fontSize = 52.sp,
+        fontWeight = FontWeight.Bold
+      )
+      Surface(
+        onClick = {},
+        modifier = Modifier.constrainAs(durationButton) {
+          top.linkTo(parent.top)
+          end.linkTo(parent.end)
+        }
+      ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
+          Text(
+            stringResource(id = duration.stringId),
+            style = MaterialTheme.typography.bodySmall
+          )
+          Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+        }
+      }
+      Column(modifier = Modifier.constrainAs(content) {
+        width = Dimension.fillToConstraints
+        height = Dimension.fillToConstraints
+        top.linkTo(title.bottom)
+        start.linkTo(parent.start)
+        end.linkTo(parent.end)
+        bottom.linkTo(parent.bottom)
+      }) {
+        ButtonRow(
+          isTodoActivated,
+          isDoneActivated,
+          { isTodoActivated = !isTodoActivated },
+          { isDoneActivated = !isDoneActivated })
+        val filteredTodoList = remember(todoList, isTodoActivated, isDoneActivated) {
+          todoList.filter { todo ->
+            when {
+              isTodoActivated && isDoneActivated -> true
+              isTodoActivated -> !todo.isDone
+              isDoneActivated -> todo.isDone
+              else -> false
+            }
+          }
+        }
+        LazyColumn(
+          modifier = Modifier.weight(1f),
+          verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          items(filteredTodoList, key = { item -> item.id }) { item ->
+            TodoItem(item.title, item.isDone, onContentClick = {
+              showModifyTodoDialog = item
+            }) { isChecked ->
+              viewModel.updateTodo(item.copy(isDone = isChecked))
+            }
           }
         }
       }
-      LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(filteredTodoList, key = { item -> item.id }) { item ->
-          TodoItem(item.title, item.isDone, onContentClick = {
-            showModifyTodoDialog = item
-          }) { isChecked ->
-            viewModel.updateTodo(item.copy(isDone = isChecked))
-          }
+      if (showCreateTodoDialog) {
+        CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
+          viewModel.addTodo(
+            todoContent,
+            ""
+          )
+          showCreateTodoDialog = false
         }
       }
-    }
-    if (showCreateTodoDialog) {
-      CreateTodoDialog({ showCreateTodoDialog = false }) { content ->
-        viewModel.addTodo(
-          content,
-          ""
-        )
-        showCreateTodoDialog = false
-      }
-    }
-    val modifyTodo: Todo? = showModifyTodoDialog
-    if (modifyTodo != null) {
-      ModifyTodoDialog(modifyTodo, {
-        showModifyTodoDialog = null
-      }) { updatedTodo ->
-        showModifyTodoDialog = null
-        viewModel.updateTodo(updatedTodo)
+      val modifyTodo: Todo? = showModifyTodoDialog
+      if (modifyTodo != null) {
+        ModifyTodoDialog(modifyTodo, {
+          showModifyTodoDialog = null
+        }) { updatedTodo ->
+          showModifyTodoDialog = null
+          viewModel.updateTodo(updatedTodo)
+        }
       }
     }
   }
 }
 
-@Composable
-private fun TitleRow(modifier: Modifier = Modifier) {
-  Row(
-    modifier = modifier.fillMaxWidth(),
-    verticalAlignment = Alignment.Top,
-    horizontalArrangement = Arrangement.SpaceBetween
-  ) {
-    Text(
-      stringResource(id = R.string.title),
-      fontSize = 52.sp,
-      fontWeight = FontWeight.Bold
-    )
-    Surface(
-      onClick = {},
-    ) {
-      Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
-        Text(
-          stringResource(id = R.string.duration_today),
-          style = MaterialTheme.typography.bodySmall
-        )
-        Icon(imageVector = Icons.Default.Menu, contentDescription = null)
-      }
-    }
-  }
+private enum class Duration(@StringRes val stringId: Int) {
+  TODAY(R.string.duration_today),
+  TOMORROW(R.string.duration_tomorrow),
+  THIS_WEEK(R.string.duration_this_week),
+  THIS_MONTH(R.string.duration_this_month),
+  THIS_YEAR(R.string.duration_this_year),
+  ALL(R.string.duration_all)
 }
 
 @Composable
@@ -161,6 +196,16 @@ private fun ButtonRow(
 
 @Preview(showBackground = true)
 @Composable
-private fun Preview() {
-  MainScreen()
+private fun MainScreenPreview() {
+  MainScreenContent(
+    todoList = (1..10).map {
+      Todo(it.toLong(), "Todo $it", "", Random.nextBoolean(), -1, -1)
+    },
+    viewModel = object : MainViewModelFunc {
+      override fun addTodo(title: String, description: String) {}
+      override fun updateTodo(todo: Todo) {}
+      override fun deleteTodo(todo: Todo) {}
+    },
+    modifier = Modifier.padding(16.dp)
+  )
 }
