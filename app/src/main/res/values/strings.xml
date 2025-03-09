@@ -2,6 +2,12 @@
   <string name="app_name">SimpleTodo</string>
   <string name="title">Todo</string>
 
+  <string name="create">Create</string>
+  <string name="save">Save</string>
+  <string name="delete">Delete</string>
+  <string name="confirm">Confirm</string>
+  <string name="cancel">Cancel</string>
+
   <string name="duration_today">today</string>
   <string name="duration_tomorrow">tomorrow</string>
   <string name="duration_this_week">this week</string>
@@ -11,4 +17,10 @@
 
   <string name="filter_button_todo">todo</string>
   <string name="filter_button_done">done</string>
+
+  <string name="todo_dialog_title_add">Add Todo</string>
+  <string name="todo_dialog_title_edit">Edit Todo</string>
+  <string name="todo_dialog_content">Content</string>
+  <string name="todo_dialog_done">Done</string>
+
 </resources>

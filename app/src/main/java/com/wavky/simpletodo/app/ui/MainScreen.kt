@@ -37,15 +37,18 @@ import androidx.compose.ui.unit.sp
 import com.wavky.simpletodo.R
 import com.wavky.simpletodo.app.MainViewModel
 import com.wavky.simpletodo.app.ui.theme.Colors
+import com.wavky.simpletodo.domain.model.Todo
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = koinViewModel()) {
+  var showCreateTodoDialog by remember { mutableStateOf(false) }
+  var showModifyTodoDialog by remember { mutableStateOf<Todo?>(null) }
   var isTodoActivated by remember { mutableStateOf(true) }
   var isDoneActivated by remember { mutableStateOf(false) }
   Scaffold(floatingActionButton = {
     FloatingActionButton({
-      viewModel.addTodo("Test", "")
+      showCreateTodoDialog = true
     }, shape = CircleShape) {
       Icon(Icons.Default.Add, contentDescription = null)
     }
@@ -64,10 +67,30 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = koinVie
       val todoList by viewModel.todoList.collectAsState()
       LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(todoList, key = { item -> item.id }) { item ->
-          TodoItem(item.title, item.isDone) { isChecked ->
+          TodoItem(item.title, item.isDone, onContentClick =  {
+            showModifyTodoDialog = item
+          }) { isChecked ->
             viewModel.updateTodo(item.copy(isDone = isChecked))
           }
         }
+      }
+    }
+    if (showCreateTodoDialog) {
+      CreateTodoDialog({ showCreateTodoDialog = false }) { content ->
+        viewModel.addTodo(
+          content,
+          ""
+        )
+        showCreateTodoDialog = false
+      }
+    }
+    val modifyTodo: Todo? = showModifyTodoDialog
+    if (modifyTodo != null) {
+      ModifyTodoDialog(modifyTodo, {
+        showModifyTodoDialog = null
+      }) { updatedTodo ->
+        showModifyTodoDialog = null
+        viewModel.updateTodo(updatedTodo)
       }
     }
   }

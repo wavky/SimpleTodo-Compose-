@@ -28,6 +28,7 @@ fun TodoItem(
   title: String,
   isCompleted: Boolean,
   modifier: Modifier = Modifier,
+  onContentClick: () -> Unit,
   onCheckedChange: (Boolean) -> Unit
 ) {
   Box(modifier.fillMaxWidth()) {
@@ -37,7 +38,7 @@ fun TodoItem(
         .fillMaxWidth()
         .clip(RoundedCornerShape(8.dp))
         .background(Colors.TodoItemBackground)
-        .clickable { onCheckedChange(!isCompleted) }
+        .clickable { onContentClick() }
         .padding(8.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
@@ -68,8 +69,8 @@ fun TodoItem(
 @Composable
 private fun preview() {
   Column {
-    TodoItem(title = "买手机", isCompleted = false) {}
-    TodoItem(title = "换电脑、更新系统", isCompleted = true) {}
-    TodoItem(title = "煮饭炒菜洗衣服遛狗\n拖地洗澡侍寝", isCompleted = false) {}
+    TodoItem(title = "买手机", isCompleted = false, onContentClick = {}) {}
+    TodoItem(title = "换电脑、更新系统", isCompleted = true, onContentClick = {}) {}
+    TodoItem(title = "煮饭炒菜洗衣服遛狗\n拖地洗澡侍寝", isCompleted = false, onContentClick = {}) {}
   }
 }
