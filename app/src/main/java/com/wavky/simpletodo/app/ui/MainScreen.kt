@@ -65,9 +65,19 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = koinVie
         { isTodoActivated = !isTodoActivated },
         { isDoneActivated = !isDoneActivated })
       val todoList by viewModel.todoList.collectAsState()
+      val filteredTodoList = remember(todoList, isTodoActivated, isDoneActivated) {
+        todoList.filter { todo ->
+          when {
+            isTodoActivated && isDoneActivated -> true
+            isTodoActivated -> !todo.isDone
+            isDoneActivated -> todo.isDone
+            else -> false
+          }
+        }
+      }
       LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(todoList, key = { item -> item.id }) { item ->
-          TodoItem(item.title, item.isDone, onContentClick =  {
+        items(filteredTodoList, key = { item -> item.id }) { item ->
+          TodoItem(item.title, item.isDone, onContentClick = {
             showModifyTodoDialog = item
           }) { isChecked ->
             viewModel.updateTodo(item.copy(isDone = isChecked))
