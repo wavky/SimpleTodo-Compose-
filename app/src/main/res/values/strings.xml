@@ -1,3 +1,14 @@
 <resources>
   <string name="app_name">SimpleTodo</string>
+  <string name="title">Todo</string>
+
+  <string name="duration_today">today</string>
+  <string name="duration_tomorrow">tomorrow</string>
+  <string name="duration_this_week">this week</string>
+  <string name="duration_this_month">this month</string>
+  <string name="duration_this_year">this year</string>
+  <string name="duration_all">all</string>
+
+  <string name="filter_button_todo">todo</string>
+  <string name="filter_button_done">done</string>
 </resources>
