@@ -1,8 +1,6 @@
 package com.wavky.simpletodo.app.ui
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,20 +8,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -43,8 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.Dimension
 import com.wavky.simpletodo.R
 import com.wavky.simpletodo.app.MainViewModel
 import com.wavky.simpletodo.app.MainViewModelFunc
@@ -78,75 +71,60 @@ fun MainScreenContent(
       Icon(Icons.Default.Add, contentDescription = null)
     }
   }) { innerPadding ->
-    ConstraintLayout(
+    Column(
       modifier = modifier
         .fillMaxSize()
         .padding(innerPadding)
     ) {
-      val (title, durationButton, content) = createRefs()
-      Title(Modifier.constrainAs(title) {
-        top.linkTo(parent.top)
-        start.linkTo(parent.start)
-      })
-      DurationButton(duration, Modifier.constrainAs(durationButton) {
-        top.linkTo(parent.top)
-        end.linkTo(parent.end)
-      }) {
-        duration = it
-      }
-      Column(modifier = Modifier.constrainAs(content) {
-        width = Dimension.fillToConstraints
-        height = Dimension.fillToConstraints
-        top.linkTo(durationButton.bottom)
-        start.linkTo(parent.start)
-        end.linkTo(parent.end)
-        bottom.linkTo(parent.bottom)
-      }) {
-        FilterButtonRow(
-          isTodoActivated,
-          isDoneActivated,
-          { isTodoActivated = !isTodoActivated },
-          { isDoneActivated = !isDoneActivated })
-        val filteredTodoList = remember(todoList, isTodoActivated, isDoneActivated) {
-          todoList.filter { todo ->
-            when {
-              isTodoActivated && isDoneActivated -> true
-              isTodoActivated -> !todo.isDone
-              isDoneActivated -> todo.isDone
-              else -> false
-            }
+      TitleRow(duration) { duration = it }
+      FilterButtonRow(
+        isTodoActivated,
+        isDoneActivated,
+        { isTodoActivated = !isTodoActivated },
+        { isDoneActivated = !isDoneActivated })
+
+      val filteredTodoList = remember(todoList, isTodoActivated, isDoneActivated) {
+        todoList.filter { todo ->
+          when {
+            isTodoActivated && isDoneActivated -> true
+            isTodoActivated -> !todo.isDone
+            isDoneActivated -> todo.isDone
+            else -> false
           }
         }
-        TodoList(
-          todoList = filteredTodoList,
-          modifier = Modifier.weight(1f),
-          onCheckChange = {
-            viewModel.updateTodo(it)
-          },
-          onContentClick = {
-            showModifyTodoDialog = it
-          }
+      }
+      TodoList(
+        todoList = filteredTodoList,
+        modifier = Modifier.weight(1f),
+        onCheckChange = {
+          viewModel.updateTodo(it)
+        },
+        onContentClick = {
+          showModifyTodoDialog = it
+        }
+      )
+    }
+
+    //region Dialogs
+    if (showCreateTodoDialog) {
+      CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
+        viewModel.addTodo(
+          todoContent,
+          ""
         )
-      }
-      if (showCreateTodoDialog) {
-        CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
-          viewModel.addTodo(
-            todoContent,
-            ""
-          )
-          showCreateTodoDialog = false
-        }
-      }
-      val modifyTodo: Todo? = showModifyTodoDialog
-      if (modifyTodo != null) {
-        ModifyTodoDialog(modifyTodo, {
-          showModifyTodoDialog = null
-        }) { updatedTodo ->
-          showModifyTodoDialog = null
-          viewModel.updateTodo(updatedTodo)
-        }
+        showCreateTodoDialog = false
       }
     }
+    val modifyTodo: Todo? = showModifyTodoDialog
+    if (modifyTodo != null) {
+      ModifyTodoDialog(modifyTodo, {
+        showModifyTodoDialog = null
+      }) { updatedTodo ->
+        showModifyTodoDialog = null
+        viewModel.updateTodo(updatedTodo)
+      }
+    }
+    //endregion
   }
 }
 
@@ -157,6 +135,25 @@ private enum class Duration(@StringRes val stringId: Int) {
   THIS_MONTH(R.string.duration_this_month),
   THIS_YEAR(R.string.duration_this_year),
   ALL(R.string.duration_all)
+}
+
+@Composable
+private fun TitleRow(
+  duration: Duration,
+  modifier: Modifier = Modifier,
+  onClickDuration: (Duration) -> Unit
+) {
+  Row(
+    modifier = modifier.fillMaxWidth(),
+    verticalAlignment = Alignment.Top,
+    horizontalArrangement = Arrangement.SpaceBetween
+  ) {
+    Title()
+    DurationButton(
+      duration = duration,
+      onClickDuration = onClickDuration
+    )
+  }
 }
 
 @Composable
@@ -269,13 +266,4 @@ private fun PreviewMainScreen() {
     },
     modifier = Modifier.padding(16.dp)
   )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewDurationButton(modifier: Modifier = Modifier) {
-  var duration by remember { mutableStateOf(Duration.TODAY) }
-  DurationButton(duration, modifier.padding(16.dp)) {
-    duration = it
-  }
 }
