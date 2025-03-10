@@ -77,7 +77,7 @@ fun ModifyTodoDialog(
 
 @Preview(showBackground = true)
 @Composable
-private fun preview() {
+private fun Preview() {
   ModifyTodoDialog(
     todo = Todo(
       0,

@@ -56,6 +56,6 @@ fun CreateTodoDialog(
 
 @Preview(showBackground = true)
 @Composable
-private fun preview() {
+private fun Preview() {
   CreateTodoDialog({}) {}
 }

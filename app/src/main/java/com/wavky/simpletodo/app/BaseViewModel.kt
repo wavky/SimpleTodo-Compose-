@@ -1,4 +1,4 @@
-package com.wavky.simpletodo.app.ui
+package com.wavky.simpletodo.app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

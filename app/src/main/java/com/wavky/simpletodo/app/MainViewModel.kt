@@ -1,7 +1,6 @@
 package com.wavky.simpletodo.app
 
 import androidx.lifecycle.viewModelScope
-import com.wavky.simpletodo.app.ui.BaseViewModel
 import com.wavky.simpletodo.domain.model.Todo
 import com.wavky.simpletodo.usecase.AddTodoUseCase
 import com.wavky.simpletodo.usecase.DeleteTodoUseCase

@@ -1,21 +1,29 @@
 package com.wavky.simpletodo.app.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -76,39 +84,25 @@ fun MainScreenContent(
         .padding(innerPadding)
     ) {
       val (title, durationButton, content) = createRefs()
-      Text(
-        stringResource(id = R.string.title),
-        Modifier.constrainAs(title) {
-          top.linkTo(parent.top)
-          start.linkTo(parent.start)
-        },
-        fontSize = 52.sp,
-        fontWeight = FontWeight.Bold
-      )
-      Surface(
-        onClick = {},
-        modifier = Modifier.constrainAs(durationButton) {
-          top.linkTo(parent.top)
-          end.linkTo(parent.end)
-        }
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
-          Text(
-            stringResource(id = duration.stringId),
-            style = MaterialTheme.typography.bodySmall
-          )
-          Icon(imageVector = Icons.Default.Menu, contentDescription = null)
-        }
+      Title(Modifier.constrainAs(title) {
+        top.linkTo(parent.top)
+        start.linkTo(parent.start)
+      })
+      DurationButton(duration, Modifier.constrainAs(durationButton) {
+        top.linkTo(parent.top)
+        end.linkTo(parent.end)
+      }) {
+        duration = it
       }
       Column(modifier = Modifier.constrainAs(content) {
         width = Dimension.fillToConstraints
         height = Dimension.fillToConstraints
-        top.linkTo(title.bottom)
+        top.linkTo(durationButton.bottom)
         start.linkTo(parent.start)
         end.linkTo(parent.end)
         bottom.linkTo(parent.bottom)
       }) {
-        ButtonRow(
+        FilterButtonRow(
           isTodoActivated,
           isDoneActivated,
           { isTodoActivated = !isTodoActivated },
@@ -123,18 +117,16 @@ fun MainScreenContent(
             }
           }
         }
-        LazyColumn(
+        TodoList(
+          todoList = filteredTodoList,
           modifier = Modifier.weight(1f),
-          verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          items(filteredTodoList, key = { item -> item.id }) { item ->
-            TodoItem(item.title, item.isDone, onContentClick = {
-              showModifyTodoDialog = item
-            }) { isChecked ->
-              viewModel.updateTodo(item.copy(isDone = isChecked))
-            }
+          onCheckChange = {
+            viewModel.updateTodo(it)
+          },
+          onContentClick = {
+            showModifyTodoDialog = it
           }
-        }
+        )
       }
       if (showCreateTodoDialog) {
         CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
@@ -168,7 +160,55 @@ private enum class Duration(@StringRes val stringId: Int) {
 }
 
 @Composable
-private fun ButtonRow(
+private fun Title(modifier: Modifier = Modifier) {
+  Text(
+    stringResource(id = R.string.title),
+    modifier = modifier,
+    fontSize = 52.sp,
+    fontWeight = FontWeight.Bold
+  )
+}
+
+@Composable
+private fun DurationButton(
+  duration: Duration,
+  modifier: Modifier = Modifier,
+  onClickDuration: (Duration) -> Unit
+) {
+  var expanded by remember { mutableStateOf(false) }
+  Box(modifier = modifier) {
+    Surface(
+      onClick = { expanded = true }
+    ) {
+      Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
+        Text(
+          stringResource(id = duration.stringId),
+          style = MaterialTheme.typography.bodySmall
+        )
+        Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+      }
+    }
+    DropdownMenu(expanded = expanded, { expanded = false }) {
+      Duration.entries.forEach { duration ->
+        DropdownMenuItem(
+          text = {
+            Text(
+              stringResource(id = duration.stringId),
+              modifier = Modifier.padding(8.dp)
+            )
+          },
+          onClick = {
+            expanded = false
+            onClickDuration(duration)
+          }
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun FilterButtonRow(
   isTodoActive: Boolean,
   isDoneActive: Boolean,
   onClickTodo: () -> Unit,
@@ -194,9 +234,30 @@ private fun ButtonRow(
   }
 }
 
+@Composable
+private fun TodoList(
+  todoList: List<Todo>,
+  modifier: Modifier = Modifier,
+  onCheckChange: (Todo) -> Unit,
+  onContentClick: (Todo) -> Unit
+) {
+  LazyColumn(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(8.dp)
+  ) {
+    items(todoList, key = { item -> item.id }) { item ->
+      TodoItem(item.title, item.isDone, onContentClick = {
+        onContentClick(item)
+      }) { isChecked ->
+        onCheckChange(item.copy(isDone = isChecked))
+      }
+    }
+  }
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun MainScreenPreview() {
+private fun PreviewMainScreen() {
   MainScreenContent(
     todoList = (1..10).map {
       Todo(it.toLong(), "Todo $it", "", Random.nextBoolean(), -1, -1)
@@ -208,4 +269,13 @@ private fun MainScreenPreview() {
     },
     modifier = Modifier.padding(16.dp)
   )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PreviewDurationButton(modifier: Modifier = Modifier) {
+  var duration by remember { mutableStateOf(Duration.TODAY) }
+  DurationButton(duration, modifier.padding(16.dp)) {
+    duration = it
+  }
 }
