@@ -67,7 +67,7 @@ fun TodoItem(
 
 @Preview(showBackground = true)
 @Composable
-private fun preview() {
+private fun Preview() {
   Column {
     TodoItem(title = "买手机", isCompleted = false, onContentClick = {}) {}
     TodoItem(title = "换电脑、更新系统", isCompleted = true, onContentClick = {}) {}

@@ -104,28 +104,28 @@ fun MainScreenContent(
         }
       )
     }
-
-    //region Dialogs
-    if (showCreateTodoDialog) {
-      CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
-        viewModel.addTodo(
-          todoContent,
-          ""
-        )
-        showCreateTodoDialog = false
-      }
-    }
-    val modifyTodo: Todo? = showModifyTodoDialog
-    if (modifyTodo != null) {
-      ModifyTodoDialog(modifyTodo, {
-        showModifyTodoDialog = null
-      }) { updatedTodo ->
-        showModifyTodoDialog = null
-        viewModel.updateTodo(updatedTodo)
-      }
-    }
-    //endregion
   }
+
+  //region Dialogs
+  if (showCreateTodoDialog) {
+    CreateTodoDialog({ showCreateTodoDialog = false }) { todoContent ->
+      viewModel.addTodo(
+        todoContent,
+        ""
+      )
+      showCreateTodoDialog = false
+    }
+  }
+  val modifyTodo: Todo? = showModifyTodoDialog
+  if (modifyTodo != null) {
+    ModifyTodoDialog(modifyTodo, {
+      showModifyTodoDialog = null
+    }) { updatedTodo ->
+      showModifyTodoDialog = null
+      viewModel.updateTodo(updatedTodo)
+    }
+  }
+  //endregion
 }
 
 private enum class Duration(@StringRes val stringId: Int) {
